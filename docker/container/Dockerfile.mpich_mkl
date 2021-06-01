@@ -1,0 +1,19 @@
+# docker build *MUST* run on the top of this project. see Makefile
+FROM registry.gitlab.com/frontistr-commons/frontistr/x86_64-linux-gnu/hybrid:mpich_mkl AS fistr1-build
+COPY . /src
+WORKDIR /src
+RUN cmake -B/build -H. -DCMAKE_INSTALL_PREFIX=/src/bin -DWITH_MPI=ON \
+  -DCMAKE_C_COMPILER=mpicc \
+  -DCMAKE_CXX_COMPILER=mpic++ \
+  -DCMAKE_Fortran_COMPILER=mpif90 \
+  -DBLAS_LIBRARIES="mkl_intel_lp64" \
+  -DLAPACK_LIBRARIES="mkl_intel_lp64" \
+  -DSCALAPACK_LIBRARIES="mkl_scalapack_lp64" \
+  -DMKL_INCLUDE_PATH=/usr/include \
+  -DMKL_LIBRARIES="mkl_blacs_intelmpi_lp64;mkl_intel_lp64;mkl_gnu_thread;mkl_core;mkl_blacs_intelmpi_lp64;mkl_intel_lp64;mkl_gnu_thread;mkl_core;mkl_blacs_intelmpi_lp64;mkl_intel_lp64;mkl_gnu_thread;mkl_core;dl;gomp" \
+ && cmake --build /build --target install -- -j $(nproc)
+
+FROM registry.gitlab.com/frontistr-commons/frontistr/x86_64-linux-gnu/runtime:mpich AS fistr1
+ENV OMP_DYNAMIC FALSE
+COPY --from=fistr1-build /src/bin /usr
+
