@@ -23,8 +23,9 @@ ifeq ($(CI_BUILD_TOKEN),)
 else
 	docker login -u gitlab-ci-token -p $(CI_BUILD_TOKEN) $(CI_REGISTRY_IMAGE)
 endif
-
-build_core:
+qemu:
+	docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
+build_core: qemu
 	docker buildx build --platform $(ARCH) -t $(CI_REGISTRY_IMAGE)/linux-gnu/runtime:base    -f Dockerfile . --target runtime
 	docker buildx build --platform $(ARCH) -t $(CI_REGISTRY_IMAGE)/linux-gnu/runtime:openmpi -f Dockerfile . --target runtime-openmpi
 	docker buildx build --platform $(ARCH) -t $(CI_REGISTRY_IMAGE)/linux-gnu/runtime:mpich   -f Dockerfile . --target runtime-mpich
