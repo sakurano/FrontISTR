@@ -1,0 +1,20 @@
+# docker build *MUST* run on the top of this project. see Makefile
+FROM registry.gitlab.com/frontistr-commons/frontistr/linux-gnu/hybrid:openmpi_openblas AS fistr1-build
+COPY . /src
+WORKDIR /src
+RUN cmake -B/build -H. -DCMAKE_INSTALL_PREFIX=/src/bin -DWITH_MPI=ON -DWITH_MKL=OFF \
+  -DCMAKE_C_COMPILER=mpicc \
+  -DCMAKE_CXX_COMPILER=mpic++ \
+  -DCMAKE_Fortran_COMPILER=mpif90 \
+  -DBLAS_LIBRARIES=openblas -DLAPACK_LIBRARIES=openblas \
+ && cmake --build /build --target install -- -j $(nproc)
+
+FROM registry.gitlab.com/frontistr-commons/frontistr/linux-gnu/runtime:openmpi AS fistr1
+ENV OMP_DYNAMIC FALSE
+ENV OMPI_ALLOW_RUN_AS_ROOT_CONFIRM 1
+ENV OMPI_ALLOW_RUN_AS_ROOT 1
+COPY --from=fistr1-build /src/bin /usr
+RUN echo >> /etc/openmpi/openmpi-mca-params.conf \
+ && echo btl_vader_single_copy_mechanism=none >> /etc/openmpi/openmpi-mca-params.conf \
+ && echo btl_openib_allow_ib=true >> /etc/openmpi/openmpi-mca-params.conf \
+ && echo btl_openib_warn_default_gid_prefix=0 >> /etc/openmpi/openmpi-mca-params.conf

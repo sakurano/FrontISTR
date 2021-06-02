@@ -1,0 +1,14 @@
+# docker build *MUST* run on the top of this project. see Makefile
+FROM registry.gitlab.com/frontistr-commons/frontistr/x86_64-linux-gnu/hybrid:mpich_openblas AS fistr1-build
+COPY . /src
+WORKDIR /src
+RUN cmake -B/build -H. -DCMAKE_INSTALL_PREFIX=/src/bin -DWITH_MPI=ON -DWITH_MKL=OFF \
+  -DCMAKE_C_COMPILER=mpicc \
+  -DCMAKE_CXX_COMPILER=mpic++ \
+  -DCMAKE_Fortran_COMPILER=mpif90 \
+  -DBLAS_LIBRARIES=openblas -DLAPACK_LIBRARIES=openblas \
+ && cmake --build /build --target install -- -j $(nproc)
+
+FROM registry.gitlab.com/frontistr-commons/frontistr/x86_64-linux-gnu/runtime:mpich AS fistr1
+ENV OMP_DYNAMIC FALSE
+COPY --from=fistr1-build /src/bin /usr

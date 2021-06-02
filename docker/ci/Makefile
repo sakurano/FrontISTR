@@ -1,5 +1,6 @@
 CI_REGISTRY_IMAGE  ?= registry.gitlab.com/frontistr-commons/frontistr
-all: runtime build document
+#all: runtime build document
+all: runtime build
 
 login:
 ifeq ($(CI_BUILD_TOKEN),)
@@ -9,14 +10,18 @@ else
 endif
 
 runtime:
-	docker build -t $(CI_REGISTRY_IMAGE)/runtime . --target runtime
+	docker build -t $(CI_REGISTRY_IMAGE)/runtime:mkl      -f Dockerfile.mkl      . --target runtime
+	docker build -t $(CI_REGISTRY_IMAGE)/runtime:openblas -f Dockerfile.openblas . --target runtime
 build:
-	docker build -t $(CI_REGISTRY_IMAGE)/build . --target build
-	docker build -t $(CI_REGISTRY_IMAGE)/build:metis4 . --target build-metis4
+	docker build -t $(CI_REGISTRY_IMAGE)/build:mkl      -f Dockerfile.mkl      . --target build
+	docker build -t $(CI_REGISTRY_IMAGE)/build:openblas -f Dockerfile.openblas . --target build
 document:
-	docker build -t $(CI_REGISTRY_IMAGE)/document . --target document
+	docker build -t $(CI_REGISTRY_IMAGE)/document:mkl      -f Dockerfile.mkl      . --target document
+	docker build -t $(CI_REGISTRY_IMAGE)/document:openblas -f Dockerfile.openblas . --target document
 push: login build document
-	docker push $(CI_REGISTRY_IMAGE)/document
-	docker push $(CI_REGISTRY_IMAGE)/build
-	docker push $(CI_REGISTRY_IMAGE)/build:metis4
-	docker push $(CI_REGISTRY_IMAGE)/runtime
+	docker push $(CI_REGISTRY_IMAGE)/build:mkl
+	docker push $(CI_REGISTRY_IMAGE)/build:openblas
+	docker push $(CI_REGISTRY_IMAGE)/runtime:mkl
+	docker push $(CI_REGISTRY_IMAGE)/runtime:openblas
+#	docker push $(CI_REGISTRY_IMAGE)/document
+#
