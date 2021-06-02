@@ -16,10 +16,10 @@ endif
 all: build
 
 login:
-ifeq ($(CI_build-TOKEN),)
+ifeq ($(CI_BUILD_TOKEN),)
 	docker login $(CI_REGISTRY_IMAGE)
 else
-	docker login -u gitlab-ci-token -p $(CI_build-TOKEN) $(CI_REGISTRY_IMAGE)
+	docker login -u gitlab-ci-token -p $(CI_BUILD_TOKEN) $(CI_REGISTRY_IMAGE)
 endif
 
 build: build-openmpi build-mpich
